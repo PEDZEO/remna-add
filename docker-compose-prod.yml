@@ -1,6 +1,6 @@
 services:
   remna-bot:
-    image: ghcr.io/dignezzz/remna-telegram-bot:latest
+    image: ghcr.io/dignezzz/remna-admin-bot:latest
     container_name: remna-telegram-bot-prod
     restart: unless-stopped
     env_file:
