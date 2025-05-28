@@ -2,7 +2,7 @@
 
 Professional Telegram bot for managing Remnawave VPN proxy service with production-ready features and mobile-optimized interface.
 
-[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/dignezzz/remna-telegram-bot/pkgs/container/remna-telegram-bot)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/dignezzz/remna-admin-bot/pkgs/container/remna-admin-bot)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)](LICENSE)
 
@@ -49,8 +49,8 @@ This bot was created by the author of
    ```bash
    sudo mkdir -p /opt/remna-bot
    cd /opt/remna-bot
-   curl -o .env https://raw.githubusercontent.com/dignezzz/remna-telegram-bot/main/.env.example
-   curl -o docker-compose.yml https://raw.githubusercontent.com/dignezzz/remna-telegram-bot/main/docker-compose-prod.yml
+   curl -o .env https://raw.githubusercontent.com/dignezzz/remna-admin-bot/main/.env.example
+   curl -o docker-compose.yml https://raw.githubusercontent.com/dignezzz/remna-admin-bot/main/docker-compose-prod.yml
    ```
 
 2. **Configure environment**
@@ -73,8 +73,8 @@ This bot was created by the author of
 
 1. **Clone and setup**
    ```bash
-   git clone https://github.com/dignezzz/remna-telegram-bot.git
-   cd remna-telegram-bot
+   git clone https://github.com/dignezzz/remna-admin-bot.git
+   cd remna-admin-bot
    pip install -r requirements.txt
    ```
 
@@ -94,7 +94,7 @@ This bot was created by the author of
 
 Images are automatically built and published to GitHub Container Registry:
 
-- **Registry**: `ghcr.io/dignezzz/remna-telegram-bot`
+- **Registry**: `ghcr.io/dignezzz/remna-admin-bot`
 - **Tags**: `latest`, `v2.0.0`, `main`, etc.
 - **Architectures**: AMD64, ARM64
 - **Security**: Non-root user, minimal attack surface
@@ -278,7 +278,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **Remnawave Team** - For the excellent VPN service API
-- **python-telegram-bot** - For the robust Telegram bot framework
+- **python-admin-bot** - For the robust Telegram bot framework
 - **Community Contributors** - For feedback and improvements
 
 ---
