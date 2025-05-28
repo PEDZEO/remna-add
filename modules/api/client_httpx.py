@@ -20,7 +20,11 @@ class RemnaAPIHttpx:
             "Authorization": f"Bearer {API_TOKEN}",
             "Content-Type": "application/json",
             "User-Agent": "RemnaBot-httpx/1.0",
-            "Accept": "application/json"
+            "Accept": "application/json",
+            # Поддельные заголовки реверс-прокси для обхода требования HTTPS
+            "X-Forwarded-Proto": "https",
+            "X-Forwarded-For": "127.0.0.1",
+            "X-Real-IP": "127.0.0.1"
         }
         
         # Настройки клиента для HTTP
