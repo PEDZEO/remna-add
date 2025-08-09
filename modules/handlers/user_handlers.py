@@ -343,71 +343,34 @@ async def handle_user_selection(update: Update, context: ContextTypes.DEFAULT_TY
     return SELECTING_USER
 
 async def show_user_details(update: Update, context: ContextTypes.DEFAULT_TYPE, uuid):
-    """Show user details"""
+    """Show user details (safe formatting to avoid Markdown parse issues)"""
     user = await UserAPI.get_user_by_uuid(uuid)
     if not user:
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        
         await update.callback_query.edit_message_text(
             "❌ Пользователь не найден или ошибка при получении данных.",
             reply_markup=reply_markup
         )
         return USER_MENU
 
+    # Формируем безопасное сообщение без Markdown
     try:
-        message = format_user_details(user)
+        message = format_user_details_safe(user)
     except Exception as e:
-        logger.error(f"Error formatting user details: {e}")
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.callback_query.edit_message_text(
-            f"❌ Ошибка при форматировании данных пользователя: {str(e)}",
-            reply_markup=reply_markup
-        )
-        return USER_MENU
+        logger.error(f"Error formatting user details (safe): {e}")
+        message = f"👤 Пользователь: {user.get('username','')}\n🆔 UUID: {user.get('uuid','')}\n📊 Статус: {user.get('status','')}"
 
-    # Create action buttons using SelectionHelper for better UX
     keyboard = SelectionHelper.create_user_info_keyboard(uuid, action_prefix="user_action")
 
-    # Сначала пробуем отправить с Markdown форматированием
     try:
         await update.callback_query.edit_message_text(
             text=message,
-            reply_markup=keyboard,
-            parse_mode="Markdown"
+            reply_markup=keyboard
         )
     except Exception as e:
-        error_msg = str(e).lower()
-        if "can't parse entities" in error_msg or "markdown" in error_msg:
-            logger.error(f"Markdown parsing error: {e}")
-            logger.error("Failed to send user details with Markdown, trying safe formatting")
-            
-            # Используем безопасное форматирование без Markdown
-            try:
-                safe_message = format_user_details_safe(user)
-                await update.callback_query.edit_message_text(
-                    text=safe_message,
-                    reply_markup=keyboard
-                )
-            except Exception as e2:
-                logger.error(f"Error with safe formatting: {e2}")
-                # Последний fallback - минимальное сообщение
-                fallback_message = f"👤 Пользователь: {user['username']}\n🆔 UUID: {user['uuid']}\n📊 Статус: {user['status']}"
-                
-                try:
-                    await update.callback_query.edit_message_text(
-                        text=fallback_message,
-                        reply_markup=keyboard
-                    )
-                except Exception as e3:
-                    logger.error(f"Critical error in user details display: {e3}")
-                    await update.callback_query.answer("❌ Ошибка при отображении данных")
-        else:
-            # Другая ошибка (не связанная с парсингом)
-            logger.error(f"Non-parsing error in show_user_details: {e}")
-            await update.callback_query.answer("❌ Ошибка при обновлении сообщения")
+        logger.error(f"Error sending user details: {e}")
+        await update.callback_query.answer("❌ Ошибка при отображении данных")
 
     context.user_data["current_user"] = user
     return SELECTING_USER
@@ -748,7 +711,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # Single user found
                 user = users[0]
                 try:
-                    message = format_user_details(user)
+                    message = format_user_details_safe(user)
                     
                     keyboard = [
                         [
@@ -846,7 +809,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # Single user found
                 user = users[0]
                 try:
-                    message = format_user_details(user)
+                    message = format_user_details_safe(user)
                     
                     keyboard = [
                         [
@@ -949,7 +912,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     # Single user found
                     user = users[0]
                     try:
-                        message = format_user_details(user)
+                        message = format_user_details_safe(user)
                         
                         keyboard = [
                             [
@@ -2264,11 +2227,13 @@ async def finish_create_user(update: Update, context: ContextTypes.DEFAULT_TYPE)
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         message = f"✅ Пользователь успешно создан!\n\n"
-        message += f"👤 Имя: {escape_markdown(result['username'])}\n"
-        message += f"🆔 UUID: `{result['uuid']}`\n"
-        message += f"🔑 Короткий UUID: `{result['shortUuid']}`\n"
-        message += f"📝 UUID подписки: `{result['subscriptionUuid']}`\n\n"
-        message += f"🔗 URL подписки: `{result['subscriptionUrl']}`\n"
+        message += f"👤 Имя: {escape_markdown(result.get('username',''))}\n"
+        message += f"🆔 UUID: `{result.get('uuid','')}`\n"
+        if result.get('shortUuid'):
+            message += f"🔑 Короткий UUID: `{result['shortUuid']}`\n"
+        # v208 может не возвращать subscriptionUuid — показываем только URL, если есть
+        if result.get('subscriptionUrl'):
+            message += f"\n🔗 URL подписки: `{result['subscriptionUrl']}`\n"
         
         if update.callback_query:
             await update.callback_query.edit_message_text(

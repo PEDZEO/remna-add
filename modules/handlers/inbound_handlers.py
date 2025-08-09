@@ -75,25 +75,7 @@ async def handle_inbounds_menu(update: Update, context: ContextTypes.DEFAULT_TYP
         page = int(data.split("_")[3])
         await handle_full_inbound_pagination(update, context, page)
 
-    elif data.startswith("add_to_users_"):
-        uuid = data.split("_")[3]
-        await add_inbound_to_all_users(update, context, uuid)
-        return INBOUND_MENU
-
-    elif data.startswith("remove_from_users_"):
-        uuid = data.split("_")[3]
-        await remove_inbound_from_all_users(update, context, uuid)
-        return INBOUND_MENU
-
-    elif data.startswith("add_to_nodes_"):
-        uuid = data.split("_")[3]
-        await add_inbound_to_all_nodes(update, context, uuid)
-        return INBOUND_MENU
-
-    elif data.startswith("remove_from_nodes_"):
-        uuid = data.split("_")[3]
-        await remove_inbound_from_all_nodes(update, context, uuid)
-        return INBOUND_MENU
+    # v208: массовые операции добавления/удаления inbound устарели
 
     return INBOUND_MENU
 
@@ -249,18 +231,8 @@ async def show_inbound_details(update: Update, context: ContextTypes.DEFAULT_TYP
     
     message = format_inbound_details(inbound)
     
-    # Create action buttons
-    keyboard = [
-        [
-            InlineKeyboardButton("➕ Добавить всем пользователям", callback_data=f"add_to_users_{uuid}"),
-            InlineKeyboardButton("➖ Удалить у всех пользователей", callback_data=f"remove_from_users_{uuid}")
-        ],
-        [
-            InlineKeyboardButton("➕ Добавить всем серверам", callback_data=f"add_to_nodes_{uuid}"),
-            InlineKeyboardButton("➖ Удалить у всех серверов", callback_data=f"remove_from_nodes_{uuid}")
-        ],
-        [InlineKeyboardButton("🔙 Назад к списку", callback_data="list_full_inbounds")]
-    ]
+    # Create action buttons (limited in v208)
+    keyboard = [[InlineKeyboardButton("🔙 Назад к списку", callback_data="list_full_inbounds")]]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -272,85 +244,7 @@ async def show_inbound_details(update: Update, context: ContextTypes.DEFAULT_TYP
     
     return INBOUND_MENU
 
-async def add_inbound_to_all_users(update: Update, context: ContextTypes.DEFAULT_TYPE, uuid: str):
-    """Add inbound to all users"""
-    await update.callback_query.answer("➕ Добавляю Inbound всем пользователям...")
-    
-    try:
-        result = await InboundAPI.add_inbound_to_users(uuid)
-        await update.callback_query.edit_message_text(f"✅ Inbound успешно добавлен всем пользователям. Затронуто пользователей: {result}")
-    except Exception as e:
-        await update.callback_query.edit_message_text(f"❌ Ошибка при добавлении Inbound всем пользователям: {e}")
-
-    keyboard = [[InlineKeyboardButton("🔙 Назад к списку", callback_data="list_full_inbounds")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text(
-        text=update.callback_query.message.text,
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
-
-    return INBOUND_MENU
-
-async def remove_inbound_from_all_users(update: Update, context: ContextTypes.DEFAULT_TYPE, uuid: str):
-    """Remove inbound from all users"""
-    await update.callback_query.answer("➖ Удаляю Inbound у всех пользователей...")
-    
-    try:
-        result = await InboundAPI.remove_inbound_from_users(uuid)
-        await update.callback_query.edit_message_text(f"✅ Inbound успешно удален у всех пользователей. Затронуто пользователей: {result}")
-    except Exception as e:
-        await update.callback_query.edit_message_text(f"❌ Ошибка при удалении Inbound у всех пользователей: {e}")
-
-    keyboard = [[InlineKeyboardButton("🔙 Назад к списку", callback_data="list_full_inbounds")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text(
-        text=update.callback_query.message.text,
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
-
-    return INBOUND_MENU
-
-async def add_inbound_to_all_nodes(update: Update, context: ContextTypes.DEFAULT_TYPE, uuid: str):
-    """Add inbound to all nodes"""
-    await update.callback_query.answer("➕ Добавляю Inbound всем серверам...")
-    
-    try:
-        result = await InboundAPI.add_inbound_to_nodes(uuid)
-        await update.callback_query.edit_message_text(f"✅ Inbound успешно добавлен всем серверам. Затронуто серверов: {result}")
-    except Exception as e:
-        await update.callback_query.edit_message_text(f"❌ Ошибка при добавлении Inbound всем серверам: {e}")
-
-    keyboard = [[InlineKeyboardButton("🔙 Назад к списку", callback_data="list_full_inbounds")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text(
-        text=update.callback_query.message.text,
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
-
-    return INBOUND_MENU
-
-async def remove_inbound_from_all_nodes(update: Update, context: ContextTypes.DEFAULT_TYPE, uuid: str):
-    """Remove inbound from all nodes"""
-    await update.callback_query.answer("➖ Удаляю Inbound у всех серверов...")
-    
-    try:
-        result = await InboundAPI.remove_inbound_from_nodes(uuid)
-        await update.callback_query.edit_message_text(f"✅ Inbound успешно удален у всех серверов. Затронуто серверов: {result}")
-    except Exception as e:
-        await update.callback_query.edit_message_text(f"❌ Ошибка при удалении Inbound у всех серверов: {e}")
-
-    keyboard = [[InlineKeyboardButton("🔙 Назад к списку", callback_data="list_full_inbounds")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text(
-        text=update.callback_query.message.text,
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
-
-    return INBOUND_MENU
+    # v208: массовые операции с inbound недоступны, удалены вспомогательные обработчики
 
 async def handle_inbound_pagination(update: Update, context: ContextTypes.DEFAULT_TYPE, page: int):
     """Handle pagination for inbound list"""

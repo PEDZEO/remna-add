@@ -11,25 +11,21 @@ def get_headers():
     return {
         "Authorization": f"Bearer {API_TOKEN}",
         "Content-Type": "application/json",
-        # Поддельные заголовки реверс-прокси для обхода требования HTTPS
-        "X-Forwarded-Proto": "https",
-        "X-Forwarded-For": "127.0.0.1",
-        "X-Real-IP": "127.0.0.1"
-        # Убираем User-Agent и Accept - возможно сервер их не любит
+        "Accept": "application/json",
+        "User-Agent": "RemnaBot/1.0",
+        "Connection": "close"
     }
 
 def get_client_kwargs():
     """Get httpx client configuration"""
     return {
-        "timeout": 30.0,
+        "timeout": 60.0,
         "verify": False if API_BASE_URL.startswith('http://') else True,
         "headers": get_headers(),
-        # Отключаем keepalive полностью - возможно сервер его не поддерживает
-        "limits": httpx.Limits(
-            max_keepalive_connections=0,  # Отключаем keepalive
-            max_connections=1,            # Только одно соединение
-            keepalive_expiry=0            # Немедленно закрываем
-        )
+        # Нормальные лимиты соединений
+        "limits": httpx.Limits(max_keepalive_connections=5, max_connections=10, keepalive_expiry=30),
+        # Форсируем HTTP/1.1
+        "http2": False
     }
 
 class RemnaAPI:
@@ -38,7 +34,7 @@ class RemnaAPI:
     @staticmethod
     async def _make_request(method, endpoint, data=None, params=None, retry_count=3):
         """Make HTTP request with retry logic and proper error handling"""
-        url = f"{API_BASE_URL}/{endpoint}"
+        url = f"{API_BASE_URL.rstrip('/')}/{endpoint.lstrip('/')}"
         
         logger.info(f"Making {method} request to: {url}")
         logger.debug(f"Request params: {params}")

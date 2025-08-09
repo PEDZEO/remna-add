@@ -16,7 +16,7 @@ from modules.config import (
     EDIT_USER, EDIT_FIELD, EDIT_VALUE,
     CREATE_USER, CREATE_USER_FIELD, BULK_CONFIRM, 
     EDIT_NODE, EDIT_NODE_FIELD, EDIT_HOST, EDIT_HOST_FIELD, NODE_PORT,
-    CREATE_NODE, NODE_NAME, NODE_ADDRESS, SELECT_INBOUNDS,
+    CREATE_NODE, NODE_NAME, NODE_ADDRESS, SELECT_INBOUNDS, CREATE_HOST, HOST_PROFILE, HOST_INBOUND, HOST_PARAMS,
     ADMIN_USER_IDS
 )
 from modules.utils.auth import check_authorization
@@ -35,7 +35,8 @@ from modules.handlers.node_handlers import (
 )
 from modules.handlers.stats_handlers import handle_stats_menu
 from modules.handlers.host_handlers import (
-    handle_hosts_menu, handle_host_edit_menu, handle_host_field_input, handle_cancel_host_edit
+    handle_hosts_menu, handle_host_edit_menu, handle_host_field_input, handle_cancel_host_edit,
+    handle_host_creation_text
 )
 from modules.handlers.inbound_handlers import handle_inbounds_menu
 from modules.handlers.bulk_handlers import handle_bulk_menu, handle_bulk_confirm
@@ -81,6 +82,16 @@ def create_conversation_handler():
                 CallbackQueryHandler(handle_stats_menu)
             ],
             HOST_MENU: [
+                CallbackQueryHandler(handle_hosts_menu)
+            ],
+            HOST_PROFILE: [
+                CallbackQueryHandler(handle_hosts_menu)
+            ],
+            HOST_INBOUND: [
+                CallbackQueryHandler(handle_hosts_menu)
+            ],
+            HOST_PARAMS: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_host_creation_text),
                 CallbackQueryHandler(handle_hosts_menu)
             ],
             INBOUND_MENU: [

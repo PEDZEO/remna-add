@@ -92,16 +92,20 @@ def format_user_details(user):
     status_emoji = "✅" if user["status"] == "ACTIVE" else "❌"
     
     try:
-        message = f"👤 *Пользователь:* {escape_markdown(user['username'])}\n"
-        message += f"🆔 *UUID:* `{user['uuid']}`\n"
-        message += f"🔑 *Короткий UUID:* `{user['shortUuid']}`\n"
-        message += f"📝 *UUID подписки:* `{user['subscriptionUuid']}`\n\n"
+        message = f"👤 *Пользователь:* {escape_markdown(user.get('username',''))}\n"
+        message += f"🆔 *UUID:* `{user.get('uuid','')}`\n"
+        if user.get('shortUuid'):
+            message += f"🔑 *Короткий UUID:* `{user.get('shortUuid')}`\n"
+        if user.get('subscriptionUuid'):
+            message += f"📝 *UUID подписки:* `{user.get('subscriptionUuid')}`\n"
+        message += "\n"
         
         # Безопасно форматируем URL подписки
         subscription_url = user.get('subscriptionUrl', '')
         if subscription_url:
             # Используем блок кода Markdown для безопасного отображения URL
-            message += f"🔗 *URL подписки:*\n```\n{subscription_url}\n```\n\n"
+            safe_url = escape_markdown(subscription_url)
+            message += f"🔗 *URL подписки:*\n`{safe_url}`\n\n"
         else:
             message += f"🔗 *URL подписки:* Не указан\n\n"
         
@@ -125,18 +129,22 @@ def format_user_details(user):
         if user.get('hwidDeviceLimit'):
             message += f"📱 *Лимит устройств:* {user['hwidDeviceLimit']}\n"
         
-        message += f"\n⏱️ *Создан:* {user['createdAt'][:10]}\n"
-        message += f"🔄 *Обновлен:* {user['updatedAt'][:10]}\n"
+        if user.get('createdAt'):
+            message += f"\n⏱️ *Создан:* {user['createdAt'][:10]}\n"
+        if user.get('updatedAt'):
+            message += f"🔄 *Обновлен:* {user['updatedAt'][:10]}\n"
         
         return message
     except Exception as e:
         # Fallback форматирование без Markdown
         logger.warning(f"Error in format_user_details: {e}")
         
-        message = f"👤 Пользователь: {user['username']}\n"
-        message += f"🆔 UUID: {user['uuid']}\n"
-        message += f"🔑 Короткий UUID: {user['shortUuid']}\n"
-        message += f"📝 UUID подписки: {user['subscriptionUuid']}\n\n"
+        message = f"👤 Пользователь: {user.get('username','')}\n"
+        message += f"🆔 UUID: {user.get('uuid','')}\n"
+        if user.get('shortUuid'):
+            message += f"🔑 Короткий UUID: {user.get('shortUuid')}\n"
+        if user.get('subscriptionUuid'):
+            message += f"📝 UUID подписки: {user.get('subscriptionUuid')}\n\n"
         
         # Добавляем URL подписки в fallback без форматирования
         subscription_url = user.get('subscriptionUrl', '')
@@ -165,8 +173,10 @@ def format_user_details(user):
         if user.get('hwidDeviceLimit'):
             message += f"📱 Лимит устройств: {user['hwidDeviceLimit']}\n"
         
-        message += f"\n⏱️ Создан: {user['createdAt'][:10]}\n"
-        message += f"🔄 Обновлен: {user['updatedAt'][:10]}\n"
+        if user.get('createdAt'):
+            message += f"\n⏱️ Создан: {user['createdAt'][:10]}\n"
+        if user.get('updatedAt'):
+            message += f"🔄 Обновлен: {user['updatedAt'][:10]}\n"
         
         return message
 
@@ -186,9 +196,11 @@ def format_user_details_safe(user):
     status_emoji = "✅" if user["status"] == "ACTIVE" else "❌"
     
     message = f"👤 Пользователь: {user['username']}\n"
-    message += f"🆔 UUID: {user['uuid']}\n"
-    message += f"🔑 Короткий UUID: {user['shortUuid']}\n"
-    message += f"📝 UUID подписки: {user['subscriptionUuid']}\n\n"
+    message += f"🆔 UUID: {user.get('uuid','')}\n"
+    if user.get('shortUuid'):
+        message += f"🔑 Короткий UUID: {user.get('shortUuid')}\n"
+    if user.get('subscriptionUuid'):
+        message += f"📝 UUID подписки: {user.get('subscriptionUuid')}\n\n"
     
     # URL подписки без какого-либо форматирования (без <pre> и без блоков кода)
     subscription_url = user.get('subscriptionUrl', '')
@@ -217,8 +229,10 @@ def format_user_details_safe(user):
     if user.get('hwidDeviceLimit'):
         message += f"📱 Лимит устройств: {user['hwidDeviceLimit']}\n"
     
-    message += f"\n⏱️ Создан: {user['createdAt'][:10]}\n"
-    message += f"🔄 Обновлен: {user['updatedAt'][:10]}\n"
+    if user.get('createdAt'):
+        message += f"\n⏱️ Создан: {user['createdAt'][:10]}\n"
+    if user.get('updatedAt'):
+        message += f"🔄 Обновлен: {user['updatedAt'][:10]}\n"
     
     return message
 
@@ -268,7 +282,14 @@ def format_host_details(host):
     message += f"🆔 *UUID*: `{host['uuid']}`\n"
     message += f"🌐 *Адрес*: {escape_markdown(host['address'])}:{host['port']}\n\n"
     
-    message += f"🔌 *Inbound UUID*: `{host['inboundUuid']}`\n"
+    # v208: inbound is an object with configProfileUuid/configProfileInboundUuid
+    inbound = host.get('inbound') or {}
+    config_profile_uuid = inbound.get('configProfileUuid')
+    config_profile_inbound_uuid = inbound.get('configProfileInboundUuid')
+    if config_profile_uuid or config_profile_inbound_uuid:
+        cp = config_profile_uuid or '—'
+        cpi = config_profile_inbound_uuid or '—'
+        message += f"🔌 *Inbound*: cp=`{cp}` inbound=`{cpi}`\n"
     
     if host.get("path"):
         message += f"🛣️ *Путь*: {escape_markdown(host['path'])}\n"
@@ -285,8 +306,8 @@ def format_host_details(host):
     if host.get("fingerprint"):
         message += f"👆 *Fingerprint*: {escape_markdown(host['fingerprint'])}\n"
     
-    message += f"🔐 *Allow Insecure*: {'✅' if host['allowInsecure'] else '❌'}\n"
-    message += f"🛡️ *Security Layer*: {host['securityLayer']}\n"
+    # allowInsecure removed in v208; keep Security Layer
+    message += f"🛡️ *Security Layer*: {host.get('securityLayer', 'DEFAULT')}\n"
     
     return message
 

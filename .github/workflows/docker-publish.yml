@@ -14,7 +14,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: dignezzz/remna-admin-bot
+  IMAGE_NAME: case211/remna-ad
 
 jobs:
   build-and-push:
