@@ -49,8 +49,8 @@ This bot was created by the author of
    ```bash
    sudo mkdir -p /opt/remna-bot
    cd /opt/remna-bot
-    curl -o .env https://raw.githubusercontent.com/Case211/remna-ad/main/.env.example
-    curl -o docker-compose.yml https://raw.githubusercontent.com/Case211/remna-ad/main/docker-compose-prod.yml
+   curl -o .env https://raw.githubusercontent.com/Case211/remna-ad/main/.env.example
+   curl -o docker-compose.yml https://raw.githubusercontent.com/Case211/remna-ad/main/docker-compose-prod.yml
    ```
 
 2. **Configure environment**
@@ -73,8 +73,8 @@ This bot was created by the author of
 
 1. **Clone and setup**
    ```bash
-    git clone https://github.com/Case211/remna-ad.git
-    cd remna-ad
+   git clone https://github.com/Case211/remna-ad.git
+   cd remna-ad
    pip install -r requirements.txt
    ```
 
@@ -95,7 +95,7 @@ This bot was created by the author of
 Images are automatically built and published to GitHub Container Registry:
 
 - **Registry**: `ghcr.io/case211/remna-ad`
-- **Tags**: `latest`, `v2.0.0`, `main`, etc.
+- **Tags**: `latest`, `v2.0.8`, `main`, etc.
 - **Architectures**: AMD64, ARM64
 - **Security**: Non-root user, minimal attack surface
 
@@ -230,8 +230,7 @@ Images are automatically built and published to GitHub Container Registry:
 - **Customizable Sections** - Fine-tune what information appears on main screen
 
 ### API Compatibility
-- ✅ **Remnawave API v1.6.5** - Full compatibility verified
-- ✅ **59 API Endpoints** - All methods tested and working
+- ✅ **Remnawave API v2.0.8** - Full compatibility verified
 - ✅ **Async Architecture** - Non-blocking operations for better performance
 
 
@@ -283,6 +282,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: May 2025  
+**Version**: 2.0.8  
+**Last Updated**: 09 August 2025  
 
