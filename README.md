@@ -2,7 +2,7 @@
 
 Professional Telegram bot for managing Remnawave VPN proxy service with production-ready features and mobile-optimized interface.
 
-[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/dignezzz/remna-admin-bot/pkgs/container/remna-admin-bot)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Case211/remna-ad/pkgs/container/remna-ad)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)](LICENSE)
 
@@ -11,7 +11,7 @@ Professional Telegram bot for managing Remnawave VPN proxy service with producti
 This bot was created by the author of 
 - [openode.xyz](https://openode.xyz)
 - [neonode.cc](https://neonode.cc)
-- [Github - DigneZzZ](https://github.com/DigneZzZ)
+- [Github - Case211](https://github.com/Case211)
 
 ## ✨ Features
 
@@ -49,8 +49,8 @@ This bot was created by the author of
    ```bash
    sudo mkdir -p /opt/remna-bot
    cd /opt/remna-bot
-   curl -o .env https://raw.githubusercontent.com/dignezzz/remna-admin-bot/main/.env.example
-   curl -o docker-compose.yml https://raw.githubusercontent.com/dignezzz/remna-admin-bot/main/docker-compose-prod.yml
+    curl -o .env https://raw.githubusercontent.com/Case211/remna-ad/main/.env.example
+    curl -o docker-compose.yml https://raw.githubusercontent.com/Case211/remna-ad/main/docker-compose-prod.yml
    ```
 
 2. **Configure environment**
@@ -73,8 +73,8 @@ This bot was created by the author of
 
 1. **Clone and setup**
    ```bash
-   git clone https://github.com/dignezzz/remna-admin-bot.git
-   cd remna-admin-bot
+    git clone https://github.com/Case211/remna-ad.git
+    cd remna-ad
    pip install -r requirements.txt
    ```
 
@@ -94,7 +94,7 @@ This bot was created by the author of
 
 Images are automatically built and published to GitHub Container Registry:
 
-- **Registry**: `ghcr.io/dignezzz/remna-admin-bot`
+- **Registry**: `ghcr.io/case211/remna-ad`
 - **Tags**: `latest`, `v2.0.0`, `main`, etc.
 - **Architectures**: AMD64, ARM64
 - **Security**: Non-root user, minimal attack surface
