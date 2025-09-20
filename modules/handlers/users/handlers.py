@@ -22,20 +22,17 @@ async def show_users_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show users menu"""
     keyboard = [
         [InlineKeyboardButton("📋 Список всех пользователей", callback_data="list_users")],
-        [InlineKeyboardButton("🔍 Поиск по имени (частичный)", callback_data="search_user")],
-        [InlineKeyboardButton("🔍 Поиск по Telegram ID", callback_data="search_user_telegram")],
-        [InlineKeyboardButton("🔍 Поиск по описанию", callback_data="search_user_description")],
+        [InlineKeyboardButton("🔍 Поиск пользователя", callback_data="search_user")],
         [InlineKeyboardButton("➕ Создать пользователя", callback_data="create_user")],
         [InlineKeyboardButton("🔙 Назад в главное меню", callback_data="back_to_main")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    message = "👥 *Управление пользователями*\n\n"
-    message += "🔍 *Доступные варианты поиска:*\n"
-    message += "• По имени - поиск части имени пользователя\n"
-    message += "• По Telegram ID - точный поиск по ID\n"
-    message += "• По описанию - поиск в описании пользователя\n\n"
-    message += "Выберите действие:"
+    message = (
+        "👥 *Управление пользователями*\n\n"
+        "🔍 *Поиск:* введите любую часть имени, Telegram ID, UUID, короткого UUID, email, тега или описания.\n\n"
+        "Выберите действие:"
+    )
 
     await safe_edit_message(
         update.callback_query,
@@ -68,7 +65,7 @@ async def handle_users_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "будут найдены все пользователи, содержащие указанный текст.",
             parse_mode="Markdown"
         )
-        context.user_data["search_type"] = "username"
+        context.user_data["search_type"] = "generic"
         return WAITING_FOR_INPUT
 
     elif data == "search_user_uuid":
@@ -127,6 +124,52 @@ async def handle_users_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return MAIN_MENU
 
     return USER_MENU
+
+async def search_users_by_term(term: str):
+    """Fetch users and filter by generic term"""
+    try:
+        response = await UserAPI.get_all_users()
+    except Exception as e:
+        logger.error(f"Error fetching users for search: {e}")
+        return []
+
+    users = []
+    if isinstance(response, dict):
+        if 'users' in response:
+            users = response['users'] or []
+        elif 'response' in response and isinstance(response['response'], dict) and 'users' in response['response']:
+            users = response['response']['users'] or []
+    elif isinstance(response, list):
+        users = response
+
+    term_lower = term.lower()
+    matches = []
+    seen = set()
+
+    for user in users:
+        if not isinstance(user, dict):
+            continue
+        user_uuid = str(user.get('uuid') or '')
+        if not user_uuid or user_uuid in seen:
+            continue
+
+        fields = [
+            str(user.get('username') or ''),
+            str(user.get('description') or ''),
+            str(user.get('email') or ''),
+            str(user.get('tag') or ''),
+            str(user.get('shortUuid') or ''),
+            user_uuid,
+            str(user.get('telegramId') or '')
+        ]
+
+        if any(term_lower in field.lower() for field in fields if field):
+            matches.append(user)
+            seen.add(user_uuid)
+
+    matches.sort(key=lambda u: (u.get('username') or '').lower())
+    return matches
+
 
 async def list_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """List all users with improved selection interface"""
@@ -684,12 +727,12 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     search_value = update.message.text.strip()
 
-    if search_type == "username":
+    if search_type in ("username", "generic"):
         # Изменяем на поиск по частичному совпадению
-        users = await UserAPI.search_users_by_partial_name(search_value)
+        users = await search_users_by_term(search_value)
         if users:
             if len(users) > 1:
-                message = f"🔍 Найдено {len(users)} пользователей с именем, содержащим '{search_value}':\n\n"
+                message = f"🔍 Найдено {len(users)} пользователей по запросу `{escape_markdown(search_value)}`:\n\n"
                 keyboard = []
                 
                 for i, user in enumerate(users):
@@ -774,10 +817,17 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
-            await update.message.reply_text(
-                f"❌ Пользователи с именем, содержащим '{search_value}', не найдены.",
-                reply_markup=reply_markup
-            )
+            try:
+                await update.message.reply_text(
+                    f"❌ Пользователи по запросу `{escape_markdown(search_value)}` не найдены.",
+                    reply_markup=reply_markup,
+                    parse_mode="Markdown"
+                )
+            except Exception:
+                await update.message.reply_text(
+                    f"❌ Пользователи по запросу '{search_value}' не найдены.",
+                    reply_markup=reply_markup
+                )
             return USER_MENU
 
 
