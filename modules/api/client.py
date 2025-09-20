@@ -114,8 +114,12 @@ class RemnaAPI:
                     return None
                     
             except httpx.HTTPStatusError as e:
-                logger.error(f"HTTP error {e.response.status_code}: {e.response.text}")
-                if e.response.status_code >= 500 and attempt < retry_count - 1:
+                status = e.response.status_code
+                if status == 404:
+                    logger.info(f"HTTP 404 for {url}: {e.response.text}")
+                    return None
+                logger.error(f"HTTP error {status}: {e.response.text}")
+                if status >= 500 and attempt < retry_count - 1:
                     wait_time = 2 ** attempt
                     logger.info(f"Server error, retrying in {wait_time} seconds...")
                     await asyncio.sleep(wait_time)

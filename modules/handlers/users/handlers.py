@@ -353,6 +353,8 @@ async def handle_user_selection(update: Update, context: ContextTypes.DEFAULT_TY
 async def show_user_details(update: Update, context: ContextTypes.DEFAULT_TYPE, uuid):
     """Show user details (safe formatting to avoid Markdown parse issues)"""
     user = await UserAPI.get_user_by_uuid(uuid)
+    context.user_data.pop("search_type", None)
+    context.user_data.pop("waiting_for", None)
     if not user:
         keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1000,6 +1002,8 @@ async def start_edit_user(update: Update, context: ContextTypes.DEFAULT_TYPE, uu
         return USER_MENU
 
     context.user_data["edit_user"] = user
+    context.user_data.pop("search_type", None)
+    context.user_data.pop("waiting_for", None)
 
     keyboard = [
         [InlineKeyboardButton("📅 Дата истечения", callback_data="edit_expireAt")],
@@ -1903,8 +1907,11 @@ async def handle_create_user_input(update: Update, context: ContextTypes.DEFAULT
                 field = fields[index]
                 
                 if field == "trafficLimitBytes":
-                    # Преобразуем строку в число
-                    value = int(traffic_bytes_str)
+                    # Преобразуем строку в число, игнорируя разделители
+                    sanitized_value = traffic_bytes_str.strip().replace(' ', '').replace(',', '')
+                    sanitized_value = sanitized_value.lstrip('_')
+                    sanitized_value = ''.join(ch for ch in sanitized_value if ch.isdigit())
+                    value = int(sanitized_value) if sanitized_value else 0
                     context.user_data["create_user"][field] = value
                     
                     # Форматируем значение в читаемый вид
@@ -2557,11 +2564,18 @@ async def confirm_delete_user(update: Update, context: ContextTypes.DEFAULT_TYPE
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await update.callback_query.edit_message_text(
-            text="\n".join(message_lines),
-            reply_markup=reply_markup,
-            parse_mode="Markdown"
-        )
+        try:
+            await update.callback_query.edit_message_text(
+                text="\n".join(message_lines),
+                reply_markup=reply_markup,
+                parse_mode="Markdown"
+            )
+        except Exception as send_error:
+            logger.error(f"Error sending deletion confirmation message: {send_error}")
+            await update.callback_query.edit_message_text(
+                text="\n".join(message_lines),
+                reply_markup=reply_markup
+            )
 
         return CONFIRM_ACTION
 
