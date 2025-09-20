@@ -8,7 +8,7 @@ from modules.api.inbounds import InboundAPI
 from modules.api.config_profiles import ConfigProfileAPI
 from modules.utils.formatters import format_node_details, format_bytes
 from modules.utils.selection_helpers import SelectionHelper
-from modules.handlers.start_handler import show_main_menu
+from modules.handlers.core.start import show_main_menu
 
 logger = logging.getLogger(__name__)
 
@@ -1408,3 +1408,4 @@ async def show_node_certificate(update: Update, context: ContextTypes.DEFAULT_TY
         )
         
         return NODE_MENU
+

@@ -6,7 +6,7 @@ from modules.config import MAIN_MENU, HOST_MENU, EDIT_HOST, EDIT_HOST_FIELD, HOS
 from modules.api.config_profiles import ConfigProfileAPI
 from modules.api.hosts import HostAPI
 from modules.utils.formatters import format_host_details
-from modules.handlers.start_handler import show_main_menu
+from modules.handlers.core.start import show_main_menu
 
 logger = logging.getLogger(__name__)
 
@@ -705,3 +705,5 @@ async def handle_cancel_host_edit(update: Update, context: ContextTypes.DEFAULT_
     else:
         await show_hosts_menu(update, context)
         return HOST_MENU
+
+

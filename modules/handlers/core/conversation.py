@@ -21,25 +21,25 @@ from modules.config import (
 )
 from modules.utils.auth import check_authorization
 
-from modules.handlers.start_handler import start
-from modules.handlers.menu_handler import handle_menu_selection
-from modules.handlers.user_handlers import (
+from modules.handlers.core.start import start
+from modules.handlers.core.menu import handle_menu_selection
+from modules.handlers.users import (
     handle_users_menu, handle_user_selection, handle_user_action,
     handle_action_confirmation, handle_text_input,
     handle_edit_field_selection, handle_edit_field_value,
     handle_create_user_input
 )
-from modules.handlers.node_handlers import (
+from modules.handlers.nodes import (
     handle_nodes_menu, handle_node_edit_menu, handle_node_field_input, handle_cancel_node_edit,
     handle_node_creation, show_node_certificate
 )
-from modules.handlers.stats_handlers import handle_stats_menu
-from modules.handlers.host_handlers import (
+from modules.handlers.stats import handle_stats_menu
+from modules.handlers.hosts import (
     handle_hosts_menu, handle_host_edit_menu, handle_host_field_input, handle_cancel_host_edit,
     handle_host_creation_text
 )
-from modules.handlers.inbound_handlers import handle_inbounds_menu
-from modules.handlers.bulk_handlers import handle_bulk_menu, handle_bulk_confirm
+from modules.handlers.inbounds import handle_inbounds_menu
+from modules.handlers.bulk import handle_bulk_menu, handle_bulk_confirm
 
 logger = logging.getLogger(__name__)
 
@@ -179,3 +179,5 @@ def create_conversation_handler():
         per_user=True,
         per_message=False
     )
+
+

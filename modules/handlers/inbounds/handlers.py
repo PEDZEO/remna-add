@@ -8,7 +8,7 @@ from modules.api.users import UserAPI
 from modules.api.nodes import NodeAPI
 from modules.utils.formatters import format_inbound_details
 from modules.utils.selection_helpers import SelectionHelper
-from modules.handlers.start_handler import show_main_menu
+from modules.handlers.core.start import show_main_menu
 
 logger = logging.getLogger(__name__)
 
@@ -361,3 +361,5 @@ async def handle_full_inbound_pagination(update: Update, context: ContextTypes.D
         )
 
     return INBOUND_MENU
+
+

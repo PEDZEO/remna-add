@@ -3,13 +3,13 @@ from telegram.ext import ContextTypes, ConversationHandler
 
 from modules.config import MAIN_MENU, USER_MENU, NODE_MENU, STATS_MENU, HOST_MENU, INBOUND_MENU, BULK_MENU, CREATE_USER, CREATE_USER_FIELD, SELECTING_USER
 from modules.utils.auth import check_authorization
-from modules.handlers.user_handlers import show_users_menu, start_create_user, show_user_details
-from modules.handlers.node_handlers import show_nodes_menu
-from modules.handlers.stats_handlers import show_stats_menu
-from modules.handlers.host_handlers import show_hosts_menu
-from modules.handlers.inbound_handlers import show_inbounds_menu
-from modules.handlers.bulk_handlers import show_bulk_menu
-from modules.handlers.start_handler import show_main_menu
+from modules.handlers.users import show_users_menu, start_create_user, show_user_details
+from modules.handlers.nodes import show_nodes_menu
+from modules.handlers.stats import show_stats_menu
+from modules.handlers.hosts import show_hosts_menu
+from modules.handlers.inbounds import show_inbounds_menu
+from modules.handlers.bulk import show_bulk_menu
+from modules.handlers.core.start import show_main_menu
 
 async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle main menu selection"""
@@ -72,3 +72,5 @@ async def back_to_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Показываем главное меню со статистикой
     await show_main_menu(update, context)
     return MAIN_MENU
+
+

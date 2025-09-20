@@ -6,7 +6,7 @@ from modules.config import MAIN_MENU, STATS_MENU
 from modules.api.system import SystemAPI
 from modules.api.nodes import NodeAPI
 from modules.utils.formatters import format_system_stats, format_bandwidth_stats, format_bytes
-from modules.handlers.start_handler import show_main_menu
+from modules.handlers.core.start import show_main_menu
 
 logger = logging.getLogger(__name__)
 
@@ -200,3 +200,5 @@ async def show_nodes_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
         return STATS_MENU
+
+

@@ -1,10 +1,10 @@
-import os
+﻿import os
 import logging
 from dotenv import load_dotenv
 from telegram.ext import Application, MessageHandler, CallbackQueryHandler, filters
 
 # Import modules
-from modules.handlers.conversation_handler import create_conversation_handler
+from modules.handlers.core.conversation import create_conversation_handler
 
 def setup_logging():
     """Setup logging configuration from environment variables"""
@@ -100,3 +100,4 @@ if __name__ == '__main__':
         pass  # Graceful shutdown
     except Exception as e:
         logger.error(f"Critical error in main: {e}", exc_info=True)
+
