@@ -2245,6 +2245,10 @@ async def finish_create_user(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # v208 может не возвращать subscriptionUuid — показываем только URL, если есть
         if result.get('subscriptionUrl'):
             message += f"\n🔗 URL подписки: `{result['subscriptionUrl']}`\n"
+        # Clear creation context now that user is created
+        for key in ("create_user", "create_user_fields", "current_field_index", "using_template", "search_type", "waiting_for"):
+            context.user_data.pop(key, None)
+
         
         if update.callback_query:
             await update.callback_query.edit_message_text(
