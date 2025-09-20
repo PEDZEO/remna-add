@@ -210,23 +210,19 @@ class UserAPI:
     
     @staticmethod
     async def disable_user(uuid):
-        """Disable a user"""
-        return await RemnaAPI.patch("users", {"uuid": uuid, "status": "DISABLED"})
+        """Disable a user using v2113 actions endpoint"""
+        return await RemnaAPI.post(f"users/{uuid}/actions/disable")
     
     @staticmethod
     async def enable_user(uuid):
-        """Enable a user"""
-        return await RemnaAPI.patch("users", {"uuid": uuid, "status": "ACTIVE"})
+        """Enable a user using v2113 actions endpoint"""
+        return await RemnaAPI.post(f"users/{uuid}/actions/enable")
     
     @staticmethod
     async def reset_user_traffic(uuid):
         """Reset user traffic"""
         return await RemnaAPI.post(f"users/{uuid}/actions/reset-traffic")
     
-    @staticmethod
-    async def activate_all_inbounds(uuid):
-        """Activate all inbounds for a user"""
-        return await RemnaAPI.post(f"users/{uuid}/actions/activate-all-inbounds")
     
     @staticmethod
     async def get_user_usage_by_range(uuid, start_date, end_date):

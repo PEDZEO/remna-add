@@ -114,12 +114,12 @@ class NodeAPI:
     
     @staticmethod
     async def add_inbound_to_all_nodes(inbound_uuid):
-        """Deprecated in v208: inbounds are managed via config profiles"""
+        """Not supported in v2113: inbounds are managed via config profiles"""
         return None
     
     @staticmethod
     async def remove_inbound_from_all_nodes(inbound_uuid):
-        """Deprecated in v208: inbounds are managed via config profiles"""
+        """Not supported in v2113: inbounds are managed via config profiles"""
         return None
         
     @staticmethod
@@ -127,11 +127,6 @@ class NodeAPI:
         """Get panel public key for node certificate"""
         return await RemnaAPI.get("keygen")
         
-    @staticmethod
-    async def add_inbound_to_node(node_uuid, inbound_uuid):
-        """Add inbound to specific node"""
-        data = {"inboundUuid": inbound_uuid}
-        return await RemnaAPI.post(f"nodes/{node_uuid}/inbounds", data)
     @staticmethod
     async def get_nodes_stats():
         """Get nodes statistics"""
