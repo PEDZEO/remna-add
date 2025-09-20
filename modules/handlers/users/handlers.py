@@ -58,59 +58,19 @@ async def handle_users_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SELECTING_USER
 
     elif data == "search_user":
+        back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")]])
+        search_prompt = (
+            "🔍 Введите текст для поиска пользователя:\n\n"
+            "💡 *Пример:* имя, часть описания, email, тег, UUID или Telegram ID."
+        )
         await safe_edit_message(
             query,
-            "🔍 Введите часть имени пользователя для поиска:\n\n"
-            "💡 *Подсказка:* Можно вводить любую часть имени, "
-            "будут найдены все пользователи, содержащие указанный текст.",
-            parse_mode="Markdown"
+            search_prompt,
+            back_markup,
+            "Markdown"
         )
         context.user_data["search_type"] = "generic"
         return WAITING_FOR_INPUT
-
-    elif data == "search_user_uuid":
-        await safe_edit_message(
-            query,
-            "🔍 Введите UUID пользователя для поиска:",
-            parse_mode="Markdown"
-        )
-        context.user_data["search_type"] = "uuid"
-        return WAITING_FOR_INPUT
-        
-    elif data == "search_user_telegram":
-        await safe_edit_message(
-            query,
-            "🔍 Введите Telegram ID пользователя для поиска:",
-            parse_mode="Markdown"
-        )
-        context.user_data["search_type"] = "telegram_id"
-        return WAITING_FOR_INPUT
-        
-    elif data == "search_user_description":
-        await safe_edit_message(
-            query,
-            "🔍 Введите ключевое слово для поиска в описании пользователей:",
-            parse_mode="Markdown"
-        )
-        context.user_data["search_type"] = "description"
-        return WAITING_FOR_INPUT
-        
-    elif data == "search_user_email":
-        await query.edit_message_text(
-            "🔍 Введите Email пользователя для поиска:",
-            parse_mode="Markdown"
-        )
-        context.user_data["search_type"] = "email"
-        return WAITING_FOR_INPUT
-        
-    elif data == "search_user_tag":
-        await query.edit_message_text(
-            "🔍 Введите тег пользователя для поиска:",
-            parse_mode="Markdown"
-        )
-        context.user_data["search_type"] = "tag"
-        return WAITING_FOR_INPUT
-    
     elif data == "create_user" or data == "menu_create_user":
         await start_create_user(update, context)
         return CREATE_USER_FIELD
@@ -727,542 +687,125 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     search_value = update.message.text.strip()
 
-    if search_type in ("username", "generic"):
-        # Изменяем на поиск по частичному совпадению
-        users = await search_users_by_term(search_value)
-        if users:
-            if len(users) > 1:
-                message = f"🔍 Найдено {len(users)} пользователей по запросу `{escape_markdown(search_value)}`:\n\n"
-                keyboard = []
-                
-                for i, user in enumerate(users):
-                    message += f"{i+1}. {user['username']} - {user['status']}\n"
-                    keyboard.append([InlineKeyboardButton(f"👤 {user['username']}", callback_data=f"view_{user['uuid']}")])
-                
-                keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
-                try:
-                    await update.message.reply_text(
-                        text=message,
-                        reply_markup=reply_markup
-                    )
-                except Exception as e:
-                    logger.error(f"Error sending username search results: {e}")
-                    # Fallback без форматирования
-                    await update.message.reply_text(
-                        text=f"Найдено {len(users)} пользователей. Используйте кнопки для выбора:",
-                        reply_markup=reply_markup
-                    )
-                return SELECTING_USER
-            else:
-                # Single user found
-                user = users[0]
-                try:
-                    message = format_user_details_safe(user)
-                    
-                    keyboard = [
-                        [
-                            InlineKeyboardButton("🔄 Сбросить трафик", callback_data=f"reset_{user['uuid']}"),
-                            InlineKeyboardButton("📝 Редактировать", callback_data=f"edit_{user['uuid']}")
-                        ]
-                    ]
-                    
-                    if user["status"] == "ACTIVE":
-                        keyboard.append([
-                            InlineKeyboardButton("🔴 Отключить", callback_data=f"disable_{user['uuid']}"),
-                            InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
-                        ])
-                    else:
-                        keyboard.append([
-                            InlineKeyboardButton("🟢 Включить", callback_data=f"enable_{user['uuid']}"),
-                            InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
-                        ])
-                    
-                    keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                    
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    # Попытка отправить с Markdown
-                    try:
-                        await update.message.reply_text(
-                            text=message,
-                            reply_markup=reply_markup,
-                            parse_mode="Markdown"
-                        )
-                    except Exception as e:
-                        logger.error(f"Error sending formatted message with Markdown: {e}")
-                        # Fallback без Markdown
-                        await update.message.reply_text(
-                            text=message,
-                            reply_markup=reply_markup
-                        )
-                    
-                    context.user_data["current_user"] = user
-                    return SELECTING_USER
-                except Exception as e:
-                    logger.error(f"Error formatting user details in username search: {e}")
-                    # Fallback сообщение
-                    keyboard = [[InlineKeyboardButton(f"👤 {user['username']}", callback_data=f"view_{user['uuid']}")]]
-                    keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    await update.message.reply_text(
-                        text=f"Найден пользователь: {user['username']}",
-                        reply_markup=reply_markup
-                    )
-                    return SELECTING_USER
-        else:
-            keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
+    if search_type in ("generic", "username"):
+        term = search_value.strip()
+        if len(term) < 2:
+            back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]])
+            await update.message.reply_text(
+                "❗ Введите минимум 2 символа для поиска.",
+                reply_markup=back_markup
+            )
+            return WAITING_FOR_INPUT
+
+        matches = await search_users_by_term(term)
+
+        if not matches:
+            back_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]])
             try:
                 await update.message.reply_text(
-                    f"❌ Пользователи по запросу `{escape_markdown(search_value)}` не найдены.",
-                    reply_markup=reply_markup,
+                    f"❌ Пользователи по запросу `{escape_markdown(term)}` не найдены.",
+                    reply_markup=back_markup,
                     parse_mode="Markdown"
                 )
             except Exception:
                 await update.message.reply_text(
-                    f"❌ Пользователи по запросу '{search_value}' не найдены.",
-                    reply_markup=reply_markup
+                    f"❌ Пользователи по запросу '{term}' не найдены.",
+                    reply_markup=back_markup
                 )
             return USER_MENU
 
+        if len(matches) == 1:
+            user = matches[0]
+            try:
+                message = format_user_details_safe(user)
 
-            
-    elif search_type == "telegram_id":
-        users = await UserAPI.get_user_by_telegram_id(search_value)
-        if users:
-            # Handle multiple users with the same Telegram ID
-            if len(users) > 1:
-                message = f"🔍 Найдено {len(users)} пользователей с Telegram ID {search_value}:\n\n"
-                keyboard = []
-                
-                for i, user in enumerate(users):
-                    message += f"{i+1}. {user['username']} - {user['status']}\n"
-                    keyboard.append([InlineKeyboardButton(f"👤 {user['username']}", callback_data=f"view_{user['uuid']}")])
-                
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🔄 Сбросить трафик", callback_data=f"reset_{user['uuid']}"),
+                        InlineKeyboardButton("📝 Редактировать", callback_data=f"edit_{user['uuid']}")
+                    ]
+                ]
+
+                if user.get('status') == 'ACTIVE':
+                    keyboard.append([
+                        InlineKeyboardButton("🔴 Отключить", callback_data=f"disable_{user['uuid']}"),
+                        InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
+                    ])
+                else:
+                    keyboard.append([
+                        InlineKeyboardButton("🟢 Включить", callback_data=f"enable_{user['uuid']}"),
+                        InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
+                    ])
+
                 keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                
                 reply_markup = InlineKeyboardMarkup(keyboard)
-                
+
                 try:
+                    await update.message.reply_text(
+                        text=message,
+                        reply_markup=reply_markup,
+                        parse_mode="Markdown"
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending formatted message with Markdown: {e}")
                     await update.message.reply_text(
                         text=message,
                         reply_markup=reply_markup
                     )
-                except Exception as e:
-                    logger.error(f"Error sending telegram_id search results: {e}")
-                    # Fallback без форматирования
-                    await update.message.reply_text(
-                        text=f"Найдено {len(users)} пользователей. Используйте кнопки для выбора:",
-                        reply_markup=reply_markup
-                    )
-                return SELECTING_USER
-            else:
-                # Single user found
-                user = users[0]
-                try:
-                    message = format_user_details_safe(user)
-                    
-                    keyboard = [
-                        [
-                            InlineKeyboardButton("🔄 Сбросить трафик", callback_data=f"reset_{user['uuid']}"),
-                            InlineKeyboardButton("📝 Редактировать", callback_data=f"edit_{user['uuid']}")
-                        ]
-                    ]
-                    
-                    if user["status"] == "ACTIVE":
-                        keyboard.append([
-                            InlineKeyboardButton("🔴 Отключить", callback_data=f"disable_{user['uuid']}"),
-                            InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
-                        ])
-                    else:
-                        keyboard.append([
-                            InlineKeyboardButton("🟢 Включить", callback_data=f"enable_{user['uuid']}"),
-                            InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
-                        ])
-                    
-                    keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                    
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    # Попытка отправить с Markdown
-                    try:
-                        await update.message.reply_text(
-                            text=message,
-                            reply_markup=reply_markup,
-                            parse_mode="Markdown"
-                        )
-                    except Exception as e:
-                        logger.error(f"Error sending formatted message with Markdown: {e}")
-                        # Fallback без Markdown
-                        await update.message.reply_text(
-                            text=message,
-                            reply_markup=reply_markup
-                        )
-                    
-                    context.user_data["current_user"] = user
-                    return SELECTING_USER
-                except Exception as e:
-                    logger.error(f"Error formatting user details in telegram_id search: {e}")
-                    # Fallback сообщение
-                    keyboard = [[InlineKeyboardButton(f"👤 {user['username']}", callback_data=f"view_{user['uuid']}")]]
-                    keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    await update.message.reply_text(
-                        text=f"Найден пользователь: {user['username']}",
-                        reply_markup=reply_markup
-                    )
-                    return SELECTING_USER
-                
+
                 context.user_data["current_user"] = user
                 return SELECTING_USER
-        else:
-            keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await update.message.reply_text(
-                f"❌ Пользователь с Telegram ID '{search_value}' не найден.",
-                reply_markup=reply_markup
-            )
-            return USER_MENU
-            
-    elif search_type == "description":
-        try:
-            users = await UserAPI.search_users_by_description(search_value)
-            if users:
-                # Handle multiple users with matching descriptions
-                if len(users) > 1:
-                    message = f"🔍 Найдено {len(users)} пользователей с описанием, содержащим '{search_value}':\n\n"
-                    keyboard = []
-                    
-                    for i, user in enumerate(users):
-                        description_preview = user.get('description', '')[:30] + "..." if len(user.get('description', '')) > 30 else user.get('description', '')
-                        # Избегаем использования escape_markdown в списке результатов
-                        message += f"{i+1}. {user['username']} - {user['status']}\n"
-                        message += f"   📝 {description_preview}\n\n"
-                        keyboard.append([InlineKeyboardButton(f"👤 {user['username']}", callback_data=f"view_{user['uuid']}")])
-                    
-                    keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                    
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    try:
-                        await update.message.reply_text(
-                            text=message,
-                            reply_markup=reply_markup
-                        )
-                    except Exception as e:
-                        logger.error(f"Error sending description search results: {e}")
-                        # Fallback без форматирования
-                        await update.message.reply_text(
-                            text=f"Найдено {len(users)} пользователей. Используйте кнопки для выбора:",
-                            reply_markup=reply_markup
-                        )
-                    return SELECTING_USER
-                else:
-                    # Single user found
-                    user = users[0]
-                    try:
-                        message = format_user_details_safe(user)
-                        
-                        keyboard = [
-                            [
-                                InlineKeyboardButton("🔄 Сбросить трафик", callback_data=f"reset_{user['uuid']}"),
-                                InlineKeyboardButton("📝 Редактировать", callback_data=f"edit_{user['uuid']}")
-                            ]
-                        ]
-                        
-                        if user["status"] == "ACTIVE":
-                            keyboard.append([
-                                InlineKeyboardButton("🔴 Отключить", callback_data=f"disable_{user['uuid']}"),
-                                InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
-                            ])
-                        else:
-                            keyboard.append([
-                                InlineKeyboardButton("🟢 Включить", callback_data=f"enable_{user['uuid']}"),
-                                InlineKeyboardButton("🔄 Отозвать подписку", callback_data=f"revoke_{user['uuid']}")
-                            ])
-                        
-                        keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                        
-                        reply_markup = InlineKeyboardMarkup(keyboard)
-                        
-                        await update.message.reply_text(
-                            text=message,
-                            reply_markup=reply_markup,
-                            parse_mode="Markdown"
-                        )
-                        
-                        context.user_data["current_user"] = user
-                        return SELECTING_USER
-                    except Exception as e:
-                        logger.error(f"Error formatting user details in description search: {e}")
-                        # Fallback сообщение
-                        keyboard = [[InlineKeyboardButton(f"👤 {user['username']}", callback_data=f"view_{user['uuid']}")]]
-                        keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
-                        reply_markup = InlineKeyboardMarkup(keyboard)
-                        
-                        await update.message.reply_text(
-                            text=f"Найден пользователь: {user['username']}",
-                            reply_markup=reply_markup
-                        )
-                        return SELECTING_USER
-            else:
-                keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
+            except Exception as e:
+                logger.error(f"Error formatting user details in search: {e}")
+                keyboard = [[InlineKeyboardButton(f"👤 {user.get('username', 'Без имени')}", callback_data=f"view_{user.get('uuid')}")]]
+                keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
                 reply_markup = InlineKeyboardMarkup(keyboard)
-                
+
                 await update.message.reply_text(
-                    f"❌ Пользователи с описанием, содержащим '{search_value}', не найдены.",
+                    text=f"Найден пользователь: {user.get('username','Без имени')}",
                     reply_markup=reply_markup
                 )
-                return USER_MENU
-        except Exception as e:
-            logger.error(f"Error in description search: {e}")
-            keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await update.message.reply_text(
-                "❌ Произошла ошибка при поиске по описанию.",
-                reply_markup=reply_markup
-            )
-            return USER_MENU
+                context.user_data["current_user"] = user
+                return SELECTING_USER
 
-    # If we reach here, unknown search type
-    await update.message.reply_text("❌ Неизвестный тип поиска.")
-    await show_users_menu(update, context)
-    return USER_MENU
+        max_results = 10
+        keyboard = []
+        message_lines = [
+            f"🔍 Найдено {len(matches)} пользователей по запросу `{escape_markdown(term)}`:",
+            ""
+        ]
 
+        for index, user in enumerate(matches[:max_results], 1):
+            username = user.get('username') or 'Без имени'
+            status = user.get('status') or 'UNKNOWN'
+            message_lines.append(f"{index}. {escape_markdown(username)} — {escape_markdown(str(status))}")
+            user_uuid = user.get('uuid')
+            if user_uuid:
+                keyboard.append([InlineKeyboardButton(f"👤 {username}", callback_data=f"view_{user_uuid}")])
 
-async def start_edit_user(update: Update, context: ContextTypes.DEFAULT_TYPE, uuid):
-    """Start editing a user"""
-    user = await UserAPI.get_user_by_uuid(uuid)
-    if not user:
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_users")]]
+        if len(matches) > max_results:
+            message_lines.append("")
+            message_lines.append(f"Показаны первые {max_results} результатов. Уточните запрос для более точного поиска.")
+
+        keyboard.append([InlineKeyboardButton("🔙 Назад в меню", callback_data="back_to_users")])
         reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.callback_query.edit_message_text(
-            "❌ Пользователь не найден или ошибка при получении данных.",
-            reply_markup=reply_markup
-        )
-        return USER_MENU
+        message_text = "\n".join(message_lines)
 
-    context.user_data["edit_user"] = user
-    context.user_data.pop("search_type", None)
-    context.user_data.pop("waiting_for", None)
-
-    keyboard = [
-        [InlineKeyboardButton("📅 Дата истечения", callback_data="edit_expireAt")],
-        [InlineKeyboardButton("📈 Лимит трафика", callback_data="edit_trafficLimitBytes")],
-        [InlineKeyboardButton("🔄 Стратегия сброса трафика", callback_data="edit_trafficLimitStrategy")],
-        [InlineKeyboardButton("📝 Описание", callback_data="edit_description")],
-        [InlineKeyboardButton("📱 Telegram ID", callback_data="edit_telegramId")],
-        [InlineKeyboardButton("📧 Email", callback_data="edit_email")],
-        [InlineKeyboardButton("🏷️ Тег", callback_data="edit_tag")],
-        [InlineKeyboardButton("📱 Лимит устройств", callback_data="edit_hwidDeviceLimit")],
-        [InlineKeyboardButton("🔙 Назад", callback_data=f"view_{uuid}")]
-    ]
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    # Форматируем дату истечения
-    expire_date = "Не указана"
-    if user.get('expireAt'):
         try:
-            expire_date = user['expireAt'][:10]  # Берём только YYYY-MM-DD часть
-        except Exception:
-            expire_date = str(user['expireAt'])
-
-    # Форматируем лимит трафика 
-    traffic_limit = format_bytes(user.get('trafficLimitBytes', 0))
-    
-    # Получаем стратегию сброса трафика
-    traffic_strategy = user.get('trafficLimitStrategy', 'Не указана')
-    
-    # Форматируем другие поля
-    description = user.get('description', 'Не указано')
-    telegram_id = user.get('telegramId', 'Не указан')
-    email = user.get('email', 'Не указан')
-    tag = user.get('tag', 'Не указан')
-    hwid_limit = str(user.get('hwidDeviceLimit', 'Не указан'))
-    
-    message = f"📝 *Редактирование пользователя*\n\n"
-    message += f"👤 Имя: {escape_markdown(user['username'])}\n"
-    message += f"🆔 UUID: `{user['uuid']}`\n\n"
-    message += f"*Текущие значения:*\n"
-    message += f"📅 Дата истечения: {escape_markdown(expire_date)}\n"
-    message += f"📈 Лимит трафика: {traffic_limit}\n"
-    message += f"🔄 Стратегия сброса: {escape_markdown(str(traffic_strategy))}\n"
-    message += f"📝 Описание: {escape_markdown(str(description))}\n"
-    message += f"📱 Telegram ID: {escape_markdown(str(telegram_id))}\n"
-    message += f"📧 Email: {escape_markdown(str(email))}\n"
-    message += f"🏷️ Тег: {escape_markdown(str(tag))}\n"
-    message += f"📱 Лимит устройств: {escape_markdown(str(hwid_limit))}\n\n"
-    message += "Выберите поле для редактирования:"
-
-    await update.callback_query.edit_message_text(
-        text=message,
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
-
-    return EDIT_USER
-
-async def handle_edit_field_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle edit field selection"""
-    query = update.callback_query
-    await query.answer()
-
-    data = query.data
-
-    if data.startswith("edit_"):
-        field = data.split("_")[1]
-        context.user_data["edit_field"] = field
-        
-        user = context.user_data["edit_user"]
-        current_value = user.get(field, "")
-        
-        if field == "expireAt":
-            current_value = current_value[:10] if current_value else "Не указана"
-            message = f"📅 *Изменение даты истечения*\n\n"
-            message += f"Текущее значение: `{current_value}`\n\n"
-            message += f"Введите новую дату истечения в формате YYYY-MM-DD:"
-        
-        elif field == "trafficLimitBytes":
-            current_value = format_bytes(current_value)
-            message = f"📈 *Изменение лимита трафика*\n\n"
-            message += f"Текущее значение: `{current_value}`\n\n"
-            message += f"Введите новый лимит трафика в байтах (0 для безлимитного):"
-        
-        elif field == "trafficLimitStrategy":
-            strategy_names = {
-                "NO_RESET": "Без сброса",
-                "DAY": "Ежедневно",
-                "WEEK": "Еженедельно",
-                "MONTH": "Ежемесячно"
-            }
-            readable_value = strategy_names.get(current_value, current_value) if current_value else "Не указана"
-            message = f"🔄 *Изменение стратегии сброса трафика*\n\n"
-            message += f"Текущее значение: `{current_value}` ({readable_value})\n\n"
-            message += f"Выберите новую стратегию сброса трафика:"
-            
-            keyboard = [
-                [InlineKeyboardButton("NO_RESET - Без сброса", callback_data="set_NO_RESET")],
-                [InlineKeyboardButton("DAY - Ежедневно", callback_data="set_DAY")],
-                [InlineKeyboardButton("WEEK - Еженедельно", callback_data="set_WEEK")],
-                [InlineKeyboardButton("MONTH - Ежемесячно", callback_data="set_MONTH")],
-                [InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]
-            ]
-            
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await query.edit_message_text(
-                text=message,
+            await update.message.reply_text(
+                text=message_text,
                 reply_markup=reply_markup,
                 parse_mode="Markdown"
             )
-            
-            return EDIT_FIELD
-        
-        elif field == "description":
-            message = f"📝 *Изменение описания*\n\n"
-            message += f"Текущее значение: `{escape_markdown(current_value) if current_value else 'Не указано'}`\n\n"
-            message += f"Введите новое описание:"
-        
-        elif field == "telegramId":
-            message = f"📱 *Изменение Telegram ID*\n\n"
-            message += f"Текущее значение: `{current_value if current_value else 'Не указан'}`\n\n"
-            message += f"Введите новый Telegram ID:"
-        
-        elif field == "email":
-            message = f"📧 *Изменение Email*\n\n"
-            message += f"Текущее значение: `{escape_markdown(current_value) if current_value else 'Не указан'}`\n\n"
-            message += f"Введите новый Email:"
-            
-        elif field == "tag":
-            message = f"🏷️ *Изменение тега*\n\n"
-            message += f"Текущее значение: `{escape_markdown(current_value) if current_value else 'Не указан'}`\n\n"
-            message += f"Введите новый тег (только ЗАГЛАВНЫЕ буквы, цифры и подчеркивания):"
-            
-        elif field == "hwidDeviceLimit":
-            message = f"📱 *Изменение лимита устройств*\n\n"
-            message += f"Текущее значение: `{current_value if current_value else 'Не указано'}`\n\n" 
-            message += f"Введите новый лимит устройств (0 для отключения):"
-        
-        else:
-            message = f"*Изменение {field}*\n\n"
-            message += f"Текущее значение: `{escape_markdown(str(current_value)) if current_value else 'Не указано'}`\n\n"
-            message += f"Введите новое значение:"
-        
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await query.edit_message_text(
-            text=message,
-            reply_markup=reply_markup,
-            parse_mode="Markdown"
-        )
-        
-        return EDIT_VALUE
+        except Exception as e:
+            logger.error(f"Error sending search results with Markdown: {e}")
+            plain_text = message_text.replace('`', '')
+            await update.message.reply_text(
+                text=plain_text,
+                reply_markup=reply_markup
+            )
 
-    elif data.startswith("view_"):
-        uuid = data.split("_")[1]
-        await show_user_details(update, context, uuid)
         return SELECTING_USER
-
-    return EDIT_USER
-
-async def handle_edit_field_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle edit field value"""
-    query = update.callback_query
-
-    if query:
-        await query.answer()
-        data = query.data
-        
-        if data.startswith("set_"):
-            value = data.split("_")[1]
-            field = context.user_data["edit_field"]
-            user = context.user_data["edit_user"]
-            
-            # Update the user with the new value
-            update_data = {field: value}
-            result = await UserAPI.update_user(user["uuid"], update_data)
-            
-            if result:
-                keyboard = [
-                    [InlineKeyboardButton("👁️ Просмотр пользователя", callback_data=f"view_{user['uuid']}")],
-                    [InlineKeyboardButton("📝 Продолжить редактирование", callback_data=f"edit_{user['uuid']}")],
-                    [InlineKeyboardButton("🔙 Назад к списку", callback_data="back_to_list")]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
-                await query.edit_message_text(
-                    f"✅ Поле {field} успешно обновлено на {value}.",
-                    reply_markup=reply_markup,
-                    parse_mode="Markdown"
-                )
-            else:
-                keyboard = [
-                    [InlineKeyboardButton("🔙 Назад", callback_data=f"edit_{user['uuid']}")]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
-                await query.edit_message_text(
-                    f"❌ Не удалось обновить поле {field}.",
-                    reply_markup=reply_markup,
-                    parse_mode="Markdown"
-                )
-            
-            return EDIT_USER
-        
-        elif data.startswith("edit_"):
-            uuid = data.split("_")[1]
-            return await start_edit_user(update, context, uuid)
 
     else:  # Text input
         field = context.user_data["edit_field"]

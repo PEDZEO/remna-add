@@ -105,7 +105,8 @@ def create_conversation_handler():
                 CallbackQueryHandler(handle_user_selection)
             ],
             WAITING_FOR_INPUT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input)
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input),
+                CallbackQueryHandler(handle_users_menu)
             ],
             CONFIRM_ACTION: [
                 CallbackQueryHandler(handle_action_confirmation)
