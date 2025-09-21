@@ -15,8 +15,6 @@ services:
       # Mount logs directory for persistence
       - remna-bot-logs:/app/logs
       
-      # Mount .env file if you prefer file-based configuration
-      # - ./.env:/app/.env:ro
     
     # Health check
     healthcheck:
